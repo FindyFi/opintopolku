@@ -72,7 +72,7 @@ let db = new sqlite3.Database(CREDENTIALS_DB_FILE, (err) => {
   }
   console.log(`Connected to the database '${CREDENTIALS_DB_FILE}'.`)
   const create = `CREATE TABLE IF NOT EXISTS credential (
-    id varchar(512),
+    id varchar(512) PRIMARY KEY,
     data TEXT
   )`
   db.run(create);
@@ -246,13 +246,7 @@ app.get('/favicon.png', (req, res) => {
 })
 
 app.get('/', async (req, res) => {
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="icon" href="favicon.png"><title>Opintopolku vahvistettaviin todisteisiin</title>
-<form action="${credentialListPath}">
-<label>Opintopolun <a href="https://opintopolku.fi/koski/omattiedot">jakolinkki</a>: <input name="url" size="50" /></label>
-<input type="submit" value="Hae"/>
-</form>
-`
-  res.send(html)
+  res.sendFile(new URL('./index.html', import.meta.url).pathname)
 })
 
 const didDocPath = path.length == 0 ? '/.well-known/did.json' : `${path}/did.json`
@@ -280,22 +274,7 @@ app.get(credentialListPath, async (req, res) => {
     return res.status(error.code).json(error)  
   })
   const stmt = db.prepare("REPLACE INTO credential (id, data) VALUES (?, ?);")
-  let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="icon" href="favicon.png"><title>Suoritukset</title>` +
-  `<style>
-    .card {
-      width: 171.2mm;
-      height: 108.96mm;
-    }
-    ul {
-      display: flex;
-      flex-wrap: wrap;
-      margin: 1em auto;
-    }
-    li {
-      list-style-type: none;
-      margin: 1em;
-    }
-    </style></head><body><ul>`
+  let html = `<ul>`
   const person = obj['henkilö']
   if (!person) {
     console.error('Ei henkilöä!')
@@ -334,37 +313,55 @@ app.get(credentialListPath, async (req, res) => {
     if (school['päättymispäivä']) {
       issuanceDate = school['päättymispäivä']
     }
+    let fieldOfStudy
     for (const jakso of school?.tila?.opiskeluoikeusjaksot) {
       if (jakso?.tila?.nimi?.fi == 'valmistunut') {
         issuanceDate = jakso.alku
+      }
+      if (jakso?.nimi?.fi) {
+        fieldOfStudy = jakso.nimi.fi
       }
     }
     school.suoritukset.forEach(a => {
       const achievement = {
         "id": null,
         "type": "Achievement",
-        "achievementType": null,
+        "achievementType": "Achievement",
         "creator": JSON.parse(JSON.stringify(creator)), // create a copy
         "description": null,
         "name": null
       }
+      if (fieldOfStudy) {
+        achievement.fieldOfStudy = fieldOfStudy
+      }
+      if (school['lisätiedot'] && school['lisätiedot'].virtaOpiskeluoikeudenTyyppi) {
+        const type = school['lisätiedot'].virtaOpiskeluoikeudenTyyppi
+        switch (type.koodiarvo) {
+          case '1':
+            achievement.achievementType = 'BachelorDegree'
+            break
+          case '3':
+            achievement.achievementType = 'MasterDegree'
+            break
+        }
+      }
+      if (a.koulusivistyskieli && a.koulusivistyskieli[0]?.nimi?.fi) {
+        achievement.tag = a.koulusivistyskieli[0].nimi.fi
+      }
       if (school?.tyyppi?.nimi?.fi) {
-        achievement.achievementType = school.tyyppi.nimi.fi
+        achievement.description = school.tyyppi.nimi.fi
       }
       if (school?.tyyppi?.lyhytNimi?.fi) {
-        achievement.achievementType = school.tyyppi.lyhytNimi.fi
+        achievement.description = school.tyyppi.lyhytNimi.fi
       }
       if (a.koulutusmoduuli?.tunniste?.nimi?.fi) {
         achievement.name = a.koulutusmoduuli.tunniste.nimi.fi
       }
-      if (a.koulusivistyskieli && a.koulusivistyskieli[0]?.nimi?.fi) {
-        achievement.description = a.koulusivistyskieli[0].nimi.fi
-      }
       if (a.koulutusmoduuli?.virtaNimi?.fi) {
-        achievement.description = a.koulutusmoduuli.virtaNimi.fi
+        achievement.fieldOfStudy = a.koulutusmoduuli.virtaNimi.fi
       }
       if (a.koulutusmoduuli?.nimi?.fi) {
-        achievement.description = a.koulutusmoduuli.nimi.fi
+        achievement.fieldOfStudy = a.koulutusmoduuli.nimi.fi
       }
       if (a.vahvistus && a.vahvistus['päivä']) {
         issuanceDate = a.vahvistus['päivä']
@@ -423,12 +420,12 @@ app.get(credentialListPath, async (req, res) => {
         ]
       }
       stmt.run(achievement.id, JSON.stringify(credential))
-      html += `<li><a href="${credentialPath}?id=${encodeURIComponent(achievement.id)}">` +
+      html += `<li class="${achievement.achievementType}"><a href="${credentialPath}?id=${encodeURIComponent(achievement.id)}">` +
               `<img class="card" src="${svgPath}?id=${encodeURIComponent(achievement.id)}" alt="${achievement.name}" />` +
               `</a></li>`
     })
   })
-  html += `</ul></body></html>`
+  html += `</ul>`
   res.send(html)
 })
 

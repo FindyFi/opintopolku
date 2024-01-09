@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+ <html>
+  <head>
+   <meta charset="utf-8">
+   <link rel="icon" href="favicon.png"/>
+   <title>Opintopolku vahvistettaviin todisteisiin</title>
+   <style>
+      body {
+        background-color: rgba(13, 3, 66, 0.1);
+        color: #0d0342;
+        font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+      }
+      h1 {
+        font-size: 48pt;
+        text-align: center;
+      }
+      form {
+        background-color: #4ffaff;
+        border: 1px outset #0d0342;
+        border-radius: 0.5em;
+        font-size: larger;
+        margin: 2em auto;
+        max-width: 40em;
+        padding: 1em;
+        position: sticky;
+        top: 1em;
+        z-index: 3;
+      }
+      #credentials {
+        margin: 1em auto;
+        width: calc(100% - 80mm);
+      }
+      ul {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 0;
+        padding: 0;
+      }
+      li {
+        list-style-type: none;
+        margin: 1em;
+        padding: 0;
+        position: relative;
+      }
+      .card {
+        transition: 0.5s all;
+        z-index: 1;
+      }
+      .card, li .code {
+        height: 108.96mm;
+        width: 171.2mm;
+      }
+      li .code {
+        background-color: #4ffaff;
+        border: 1px outset #0d0342;
+        border-radius: 4.6mm;
+        box-shadow: -0.5em 1em 2em #0d0342;
+        font-family: 'Consolas', 'Lucida Sans Monospace', 'Courier New', Courier, monospace;
+        font-size: x-small;
+        left: 0;
+        opacity: 0;
+        overflow: auto;
+        padding: 1em;
+        position: absolute;
+        top: 0;
+        transform: rotate3d(0, 1, 0, 180deg) scale(1);
+        transition: 0.5s all;
+        white-space: pre;
+        z-index: 0;
+      }
+      li.turned .card {
+        transform: rotate3d(0, 1, 0, 180deg) scale(1.5);
+      }
+      li.turned .code {
+        opacity: 1;
+        transform: rotate3d(0, 0, 0, 0) scale(1.5);
+        z-index: 2;
+      }
+   </style>
+  </head>
+  <body>
+   <h1>Opintopolku todisteisiin</h1>
+   <form action="./credentials">
+    <label>Opintopolun <a href="https://opintopolku.fi/koski/omattiedot" target="_blank">jakolinkki</a>: <input name="url" size="75" /></label>
+    <input type="submit" value="Hae"/>
+   </form>
+   <div id="credentials">
+   </div>
+   <script>
+    const f = document.querySelector('form')
+    const c = document.querySelector('#credentials')
+    f.onsubmit = async (e) => {
+     e.preventDefault()
+     const body = new URLSearchParams(new FormData(f))
+     console.log(body)
+     const url = `${f.action}?url=${encodeURIComponent(f.url.value)}`
+     const response = await fetch(url)
+     const ul = await response.text()
+     c.innerHTML = ul
+     const cards = c.querySelectorAll('li')
+     for (const li of cards) {
+      const a = li.querySelector('a')
+      const resp = await fetch(a.href)
+      const vc = await resp.json()
+      const code = document.createElement('div')
+      code.className = 'code'
+      code.innerHTML = JSON.stringify(vc, null, 2)
+      li.appendChild(code)
+      li.onclick = async function(e) {
+        e.preventDefault()
+        this.classList.toggle('turned')
+      }
+     }
+    }
+   </script>
+  </body>
+</html>
