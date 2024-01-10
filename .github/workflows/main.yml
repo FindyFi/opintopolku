@@ -6,6 +6,6 @@ on:
       - 'main'
 jobs:
   reload:
-    runs-on: [self-hosted, linux]
+    runs-on: [self-hosted, Linux]
     steps:
       - run: ~/bin/reload.sh
