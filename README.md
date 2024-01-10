@@ -16,5 +16,4 @@ export KEY=`veramo config gen-key -q`
 sed -i -re "s/(dbEncryptionKey: )\w+/\1'$KEY'/" ./agent.yml
 npm install
 npm run start
-
 ```
