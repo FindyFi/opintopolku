@@ -1,0 +1,11 @@
+name: Deploy on Commit
+run-name: Deploying ${{ github.actor }}'s recent commits
+on:
+  push:
+    branches:
+      - 'main'
+jobs:
+  reload:
+    runs-on: [self-hosted, linux]
+    steps:
+      - run: ~/bin/reload.sh
