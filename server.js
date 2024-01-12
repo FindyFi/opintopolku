@@ -222,6 +222,10 @@ async function db_get(query) {
   });
 }
 
+function getName(object, lang) {
+  return object[lang] || object['fi']
+}
+
 async function getVerifiableCredential(id, format) {
   const {alias, identifier} = await getMyDid()
   const select = `SELECT * FROM credential WHERE id = '${id}'`
@@ -254,6 +258,7 @@ app.get(didDocPath, getDidDocument)
 
 app.get(credentialListPath, async (req, res) => {
   const url = req.query.url.replace('koski/opinnot', 'koski/api/opinnot')
+  const lang = req.query.lang || 'fi'
   const {alias, identifier} = await getMyDid()
   const response = await fetch(url).catch(e => {
     const error = {
@@ -301,14 +306,14 @@ app.get(credentialListPath, async (req, res) => {
     if (school?.oppilaitos?.oid) {
       creator.id = school.oppilaitos.oid
     }
-    if (school?.oppilaitos?.nimi?.fi) {
-      creator.name = school.oppilaitos.nimi.fi
+    if (school?.oppilaitos?.nimi) {
+      creator.name = getName(school.oppilaitos.nimi, lang)
     }
     if (school?.koulutustoimija?.oid) {
       creator.id = school.koulutustoimija.oid
     }
     if (school?.koulutustoimija?.nimi?.fi) {
-      creator.name = school.koulutustoimija.nimi.fi
+      creator.name = getName(school.koulutustoimija.nimi, lang)
     }
     if (school['päättymispäivä']) {
       issuanceDate = school['päättymispäivä']
@@ -319,7 +324,7 @@ app.get(credentialListPath, async (req, res) => {
         issuanceDate = jakso.alku
       }
       if (jakso?.nimi?.fi) {
-        fieldOfStudy = jakso.nimi.fi
+        fieldOfStudy = getName(jakso.nimi, lang)
       }
     }
     school.suoritukset.forEach(a => {
@@ -346,22 +351,22 @@ app.get(credentialListPath, async (req, res) => {
         }
       }
       if (a.koulusivistyskieli && a.koulusivistyskieli[0]?.nimi?.fi) {
-        achievement.tag = a.koulusivistyskieli[0].nimi.fi
+        achievement.tag = getName(a.koulusivistyskieli[0].nimi, lang)
       }
       if (school?.tyyppi?.nimi?.fi) {
-        achievement.description = school.tyyppi.nimi.fi
+        achievement.description = getName(school.tyyppi.nimi, lang)
       }
       if (school?.tyyppi?.lyhytNimi?.fi) {
-        achievement.description = school.tyyppi.lyhytNimi.fi
+        achievement.description = getName(school.tyyppi.lyhytNimi, lang)
       }
       if (a.koulutusmoduuli?.tunniste?.nimi?.fi) {
-        achievement.name = a.koulutusmoduuli.tunniste.nimi.fi
+        achievement.name = getName(a.koulutusmoduuli.tunniste.nimi, lang)
       }
       if (a.koulutusmoduuli?.virtaNimi?.fi) {
-        achievement.fieldOfStudy = a.koulutusmoduuli.virtaNimi.fi
+        achievement.fieldOfStudy = getName(a.koulutusmoduuli.virtaNimi, lang)
       }
       if (a.koulutusmoduuli?.nimi?.fi) {
-        achievement.fieldOfStudy = a.koulutusmoduuli.nimi.fi
+        achievement.fieldOfStudy = getName(a.koulutusmoduuli.nimi, lang)
       }
       if (a.vahvistus && a.vahvistus['päivä']) {
         issuanceDate = a.vahvistus['päivä']
@@ -373,10 +378,10 @@ app.get(credentialListPath, async (req, res) => {
         achievement.creator.id = a.vahvistus['myöntäjäOrganisaatio'].oid
       }
       if (a.vahvistus && a.vahvistus['myöntäjäorganisaatio']?.oppilaitosnumero?.nimi?.fi) {
-        achievement.creator.name = a.vahvistus['myöntäjäorganisaatio'].oppilaitosnumero.nimi.fi
+        achievement.creator.name = getName(a.vahvistus['myöntäjäorganisaatio'].oppilaitosnumero.nimi, lang)
       }
       if (a.vahvistus && a.vahvistus['myöntäjäOrganisaatio']?.nimi?.fi) {
-        achievement.creator.name = a.vahvistus['myöntäjäOrganisaatio'].nimi.fi
+        achievement.creator.name = getName(a.vahvistus['myöntäjäOrganisaatio'].nimi, lang)
       }
       if (a.koulutusmoduuli?.tunniste?.koodiarvo) {
         achievement.id = [
@@ -419,6 +424,7 @@ app.get(credentialListPath, async (req, res) => {
           }
         ]
       }
+      // console.log(JSON.stringify(credential, null, 2))
       stmt.run(achievement.id, JSON.stringify(credential))
       html += `<li class="${achievement.achievementType}"><a href="${credentialPath}?id=${encodeURIComponent(achievement.id)}">` +
               `<img class="card" src="${svgPath}?id=${encodeURIComponent(achievement.id)}" alt="${achievement.name}" />` +

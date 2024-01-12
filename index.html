@@ -82,6 +82,7 @@
    <h1>Opintopolku todisteisiin</h1>
    <form action="./credentials">
     <label>Opintopolun <a href="https://opintopolku.fi/koski/omattiedot" target="_blank">jakolinkki</a>: <input name="url" size="75" /></label>
+    <input type="hidden" name="lang" value="fi"/>
     <input type="submit" value="Hae"/>
    </form>
    <div id="credentials">
@@ -89,11 +90,12 @@
    <script>
     const f = document.querySelector('form')
     const c = document.querySelector('#credentials')
+    const params = new URLSearchParams(document.location.search)
+    const lang = params.get('lang') || 'fi'
+    f.lang.value = lang
     f.onsubmit = async (e) => {
      e.preventDefault()
-     const body = new URLSearchParams(new FormData(f))
-     console.log(body)
-     const url = `${f.action}?url=${encodeURIComponent(f.url.value)}`
+     const url = `${f.action}?url=${encodeURIComponent(f.url.value)}&lang=${encodeURIComponent(f.lang.value)}`
      const response = await fetch(url)
      const ul = await response.text()
      c.innerHTML = ul
