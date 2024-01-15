@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { createAgent } from '@veramo/core'
 import { KeyManager } from '@veramo/key-manager'
@@ -223,7 +224,8 @@ async function db_get(query) {
 }
 
 function getName(object, lang) {
-  return object[lang] || object['fi']
+  if (object[lang]) return object[lang]
+  return object['fi']
 }
 
 async function getVerifiableCredential(id, format) {
@@ -424,7 +426,21 @@ app.get(credentialListPath, async (req, res) => {
           }
         ]
       }
-      // console.log(JSON.stringify(credential, null, 2))
+      if (person.etunimet && person.sukunimi) {
+        const hash = createHash('sha256')
+        const salt = alias
+        const salted = `${person.etunimet} ${person.sukunimi}${salt}`
+        const hashed = hash.update(salted).digest('hex')
+        credential.credentialSubject.identifier = [
+          {
+            "type": "IdentityObject",
+            "hashed": true,
+            "identityHash": `sha256$${hashed}`,
+            "identityType": "ext:name",
+            "salt": salt
+          }
+        ]
+      }
       stmt.run(achievement.id, JSON.stringify(credential))
       html += `<li class="${achievement.achievementType}"><a href="${credentialPath}?id=${encodeURIComponent(achievement.id)}">` +
               `<img class="card" src="${svgPath}?id=${encodeURIComponent(achievement.id)}" alt="${achievement.name}" />` +
@@ -440,8 +456,10 @@ app.get(credentialPath, async (req, res) => {
   if (req.query.format == 'jwt') {
     const fmt = req.query.format
   }
+  console.log(req.query.id)
   const vc = await getVerifiableCredential(req.query.id, fmt).catch(e => {
-    return res.status(404).json(e)
+    res.status(404).json(e)
+    throw new Error(e)
   })
   res.setHeader('Content-Type', 'application/ld+json').json(vc)
 })
@@ -508,4 +526,3 @@ const server = app.listen(httpPort, (err) => {
   if (err) { console.error(err) }
   console.log(`Server running on port ${httpPort}, public address ${baseUrl}`)
 })
-
