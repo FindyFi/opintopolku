@@ -42,15 +42,16 @@
         padding: 0;
         position: relative;
       }
-      .card {
+      .card img {
         transition: 0.5s all;
         z-index: 1;
       }
-      .card, li .code {
+      .card img, .card .code {
+        box-sizing: border-box;
         height: 108.96mm;
         width: 171.2mm;
       }
-      li .code {
+      .card .code {
         background-color: #4ffaff;
         border: 1px outset #0d0342;
         border-radius: 4.6mm;
@@ -58,6 +59,7 @@
         font-family: 'Consolas', 'Lucida Sans Monospace', 'Courier New', Courier, monospace;
         font-size: x-small;
         left: 0;
+        margin: 0;
         opacity: 0;
         overflow: auto;
         padding: 1em;
@@ -68,13 +70,18 @@
         white-space: pre;
         z-index: 0;
       }
-      li.turned .card {
+      .card.turned img {
         transform: rotate3d(0, 1, 0, 180deg) scale(1.5);
       }
-      li.turned .code {
+      .card.turned .code {
         opacity: 1;
         transform: rotate3d(0, 0, 0, 0) scale(1.5);
         z-index: 2;
+      }
+      .download {
+        display: block;
+        margin: 0;
+        text-align: center;
       }
    </style>
   </head>
@@ -104,16 +111,19 @@
      const response = await fetch(credsUrl)
      const ul = await response.text()
      c.innerHTML = ul
-     const cards = c.querySelectorAll('li')
-     for (const li of cards) {
-      const a = li.querySelector('a')
+     const cards = c.querySelectorAll('.card')
+     for (const card of cards) {
+      const a = card.parentNode
+      a.onclick = function(e) {
+       e.preventDefault()
+      }
       const resp = await fetch(a.href)
       const vc = await resp.json()
       const code = document.createElement('div')
       code.className = 'code'
       code.innerHTML = JSON.stringify(vc, null, 2)
-      li.appendChild(code)
-      li.ondblclick = async function(e) {
+      card.appendChild(code)
+      card.ondblclick = async function(e) {
         e.preventDefault()
         this.classList.toggle('turned')
       }
