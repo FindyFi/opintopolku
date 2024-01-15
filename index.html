@@ -108,7 +108,7 @@
       code.className = 'code'
       code.innerHTML = JSON.stringify(vc, null, 2)
       li.appendChild(code)
-      li.onclick = async function(e) {
+      li.ondblclick = async function(e) {
         e.preventDefault()
         this.classList.toggle('turned')
       }
