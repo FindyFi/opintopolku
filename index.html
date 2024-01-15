@@ -33,7 +33,7 @@
       ul {
         display: flex;
         flex-wrap: wrap;
-        margin: 0;
+        margin: 30mm 0 0 0;
         padding: 0;
       }
       li {
@@ -92,11 +92,16 @@
     const c = document.querySelector('#credentials')
     const params = new URLSearchParams(document.location.search)
     const lang = params.get('lang') || 'fi'
+    const url = params.get('url') || ''
     f.lang.value = lang
+    f.url.value = url
     f.onsubmit = async (e) => {
      e.preventDefault()
-     const url = `${f.action}?url=${encodeURIComponent(f.url.value)}&lang=${encodeURIComponent(f.lang.value)}`
-     const response = await fetch(url)
+     const getParams = `url=${encodeURIComponent(f.url.value)}` +
+                       `&lang=${encodeURIComponent(f.lang.value)}`
+     history.pushState({lang, url}, '', `${document.location.href.split('?')[0]}?${getParams}`)
+     const credsUrl = `${f.action}?${getParams}`
+     const response = await fetch(credsUrl)
      const ul = await response.text()
      c.innerHTML = ul
      const cards = c.querySelectorAll('li')
