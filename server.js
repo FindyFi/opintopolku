@@ -319,7 +319,7 @@ app.get(credentialListPath, async (req, res) => {
     if (school['päättymispäivä']) {
       issuanceDate = school['päättymispäivä']
     }
-    let fieldOfStudy
+    let fieldOfStudy = ''
     for (const jakso of school?.tila?.opiskeluoikeusjaksot) {
       if (jakso?.tila?.nimi?.fi == 'valmistunut') {
         issuanceDate = jakso.alku
