@@ -11,12 +11,13 @@ import { Resolver } from 'did-resolver'
 import { getResolver as webDidResolver } from 'web-did-resolver'
 import { WebDIDProvider } from '@veramo/did-provider-web'
 import { CredentialPlugin } from '@veramo/credential-w3c'
-import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018, VeramoEcdsaSecp256k1RecoverySignature2020 } from '@veramo/credential-ld'
+import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2020, VeramoEcdsaSecp256k1RecoverySignature2020 } from '@veramo/credential-ld'
 import { bytesToBase58, bytesToMultibase, hexToBytes } from '@veramo/utils'
 import express from 'express'
 import cors from 'cors'
 import sqlite3 from 'sqlite3'
 import * as yaml from 'js-yaml'
+import openBadgeContext from './context-3.0.3.json' assert { type: 'json' }
 
 const CREDENTIALS_DB_FILE = 'credentials.db'
 
@@ -26,14 +27,7 @@ const credentialListPath = '/credentials'
 const credentialPath = '/credential'
 const svgPath = '/svg'
 
-badgeContexts['https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json'] = {
-  "@context": {
-    OpenBadgeCredential: 'https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json',
-    Achievement: 'https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json',
-    AchievementCredential: 'https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json',
-  }
-}
-
+badgeContexts['https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json'] = openBadgeContext
 badgeContexts['https://purl.imsglobal.org/spec/ob/v3p0/extensions.json'] = {
   "@context": {
     "id": "@id",
@@ -42,7 +36,7 @@ badgeContexts['https://purl.imsglobal.org/spec/ob/v3p0/extensions.json'] = {
     "1EdTechRevocationList": "https://purl.imsglobal.org/spec/vcrl/v1p0/context.json#1EdTechRevocationList",
     "1EdTechCredentialRefresh": "https://purl.imsglobal.org/spec/vccr/v1p0/context.json#1EdTechCredentialRefresh"
   }
-}  
+}
 
 const configFile = './agent.yml'
 const configString = readFileSync(configFile, 'utf8')
@@ -60,7 +54,7 @@ if (pathParts.length) {
 const keyTypes = {
   Secp256k1: 'EcdsaSecp256k1VerificationKey2019',
   Secp256r1: 'EcdsaSecp256r1VerificationKey2019',
-  Ed25519: 'Ed25519VerificationKey2018',
+  Ed25519: 'Ed25519VerificationKey2020',
   X25519: 'X25519KeyAgreementKey2019',
   Bls12381G1: 'Bls12381G1Key2020',
   Bls12381G2: 'Bls12381G2Key2020',
@@ -114,7 +108,7 @@ const agent = createAgent({
     new CredentialIssuerLD({
       contextMaps: [LdDefaultContexts, badgeContexts],
       suites: [
-        new VeramoEd25519Signature2018(),
+        new VeramoEd25519Signature2020(),
       ]
     })
   ]
@@ -191,12 +185,12 @@ async function getDidDocument(req, res) {
         break
       case 'Ed25519VerificationKey2020':
         contexts.add('https://w3id.org/security/suites/ed25519-2020/v1')
-        didDoc.verificationMethod.at(-1).publicKeyMultibase = bytesToMultibase(hexToBytes(key.publicKeyHex), 'base58btc', 'ed25519-pub')
+        didDoc.verificationMethod.at(-1).publicKeyMultibase = bytesToMultibase(hexToBytes(key.publicKeyHex), 'Ed25519')
         delete(didDoc.verificationMethod.at(-1).publicKeyHex)
         break
       case 'X25519KeyAgreementKey2020':
         contexts.add('https://w3id.org/security/suites/x25519-2020/v1')
-        didDoc.verificationMethod.at(-1).publicKeyMultibase = bytesToMultibase(hexToBytes(key.publicKeyHex), 'base58btc', 'x25519-pub')
+        didDoc.verificationMethod.at(-1).publicKeyMultibase = bytesToMultibase(hexToBytes(key.publicKeyHex), 'X25519')
         delete(didDoc.verificationMethod.at(-1).publicKeyHex)
         break
       case 'EcdsaSecp256r1VerificationKey2019':
@@ -235,6 +229,7 @@ async function getVerifiableCredential(id, format) {
   if (!row) {
     throw new Error(`Tunnisteella ${id} ei löytynyt todisteita.`)
   }
+  // console.log(row.data)
   const credential = JSON.parse(row.data)
   const vc = await agent.createVerifiableCredential({
     credential: credential,
@@ -257,6 +252,7 @@ app.get('/', async (req, res) => {
 
 const didDocPath = path.length == 0 ? '/.well-known/did.json' : `${path}/did.json`
 app.get(didDocPath, getDidDocument)
+app.get('/did.json', getDidDocument) // hack for Open Badges 3.0 Verifier that doesn't know .well-known
 
 app.get(credentialListPath, async (req, res) => {
   const url = req.query.url.replace('koski/opinnot', 'koski/api/opinnot')
@@ -268,18 +264,20 @@ app.get(credentialListPath, async (req, res) => {
       "message": `Opintosuorituksia ei löytynyt osoitteella ${url}`,
       "details": e
     }
-    console.error(error)
-    return res.status(error.code).json(error)
+    res.status(error.code).json(error)
+    console.warn(error)
   })
+  if (!response) return false
   const obj = await response.json().catch(e => {
     const error = {
       "code": 500,
       "message": `Osoitteen ${url} tiedot eivät olleet JSON-muodossa.`,
       "details": e
     }
-    console.error(error)
-    return res.status(error.code).json(error)  
+    res.status(error.code).json(error)
+    console.warn(error)
   })
+  if (!obj) return false
   const stmt = db.prepare("REPLACE INTO credential (id, data) VALUES (?, ?);")
   let html = `<ul>`
   const person = obj['henkilö']
@@ -295,8 +293,9 @@ app.get(credentialListPath, async (req, res) => {
       "message": `Opintosuorituksista ${url} ei löytynyt yhtään opiskeluoikeutta.`,
       "details": e
     }
-    console.error(error)
-    return res.status(error.code).json(error)  
+    res.status(error.code).send(`<p class="error">${error}</p>`)
+    console.warn(error)
+    return false
   }
   schools.forEach(school => {
     const creator = {
@@ -335,6 +334,9 @@ app.get(credentialListPath, async (req, res) => {
         "type": "Achievement",
         "achievementType": "Achievement",
         "creator": JSON.parse(JSON.stringify(creator)), // create a copy
+        "criteria": {
+          "narrative": ""
+        },
         "description": null,
         "name": null
       }
@@ -361,6 +363,9 @@ app.get(credentialListPath, async (req, res) => {
       if (school?.tyyppi?.lyhytNimi?.fi) {
         achievement.description = getName(school.tyyppi.lyhytNimi, lang)
       }
+      if (a.koulutusmoduuli?.tunniste?.lyhytNimi?.fi) {
+        achievement.name = getName(a.koulutusmoduuli.tunniste.lyhytNimi, lang)
+      }
       if (a.koulutusmoduuli?.tunniste?.nimi?.fi) {
         achievement.name = getName(a.koulutusmoduuli.tunniste.nimi, lang)
       }
@@ -369,6 +374,9 @@ app.get(credentialListPath, async (req, res) => {
       }
       if (a.koulutusmoduuli?.nimi?.fi) {
         achievement.fieldOfStudy = getName(a.koulutusmoduuli.nimi, lang)
+      }
+      if (a.koulutusmoduuli?.lyhytNimi?.fi) {
+        achievement.fieldOfStudy = getName(a.koulutusmoduuli.lyhytNimi, lang)
       }
       if (a.vahvistus && a.vahvistus['päivä']) {
         issuanceDate = a.vahvistus['päivä']
@@ -384,6 +392,12 @@ app.get(credentialListPath, async (req, res) => {
       }
       if (a.vahvistus && a.vahvistus['myöntäjäOrganisaatio']?.nimi?.fi) {
         achievement.creator.name = getName(a.vahvistus['myöntäjäOrganisaatio'].nimi, lang)
+      }
+      if (a.luokittelu?.nimi?.fi) {
+        achievement.criteria.narrative = getName(a.luokittelu.nimi, lang)
+      }
+      else {
+        achievement.criteria.narrative = achievement.description
       }
       if (a.koulutusmoduuli?.tunniste?.koodiarvo) {
         achievement.id = [
@@ -401,7 +415,8 @@ app.get(credentialListPath, async (req, res) => {
         // signing all credentials with our own did but using the name of the original issuer
         // TODO: create DIDs for all schools
         id: identifier.did,
-        name: achievement.creator.name
+        name: achievement.creator.name,
+        type: "Profile"
       }
       const credential = {
         "@context": [
@@ -442,9 +457,13 @@ app.get(credentialListPath, async (req, res) => {
         ]
       }
       stmt.run(achievement.id, JSON.stringify(credential))
+      const file = achievement.id.split('/').at(-1)
       html += `<li class="${achievement.achievementType}"><a href="${credentialPath}?id=${encodeURIComponent(achievement.id)}">` +
-              `<img class="card" src="${svgPath}?id=${encodeURIComponent(achievement.id)}" alt="${achievement.name}" />` +
-              `</a></li>`
+              `<span class="card"><img src="${svgPath}?id=${encodeURIComponent(achievement.id)}" alt="${achievement.name}" /></span></a>` +
+              `<span class="download">Lataa: ` +
+              `<a download="${file}.svg" href="${svgPath}?id=${encodeURIComponent(achievement.id)}">SVG</a> ` +
+              `<a download="${file}.json"  href="${credentialPath}?id=${encodeURIComponent(achievement.id)}">JSON</a> ` +
+              `</span></li>`
     })
   })
   html += `</ul>`
@@ -456,7 +475,6 @@ app.get(credentialPath, async (req, res) => {
   if (req.query.format == 'jwt') {
     const fmt = req.query.format
   }
-  console.log(req.query.id)
   const vc = await getVerifiableCredential(req.query.id, fmt).catch(e => {
     res.status(404).json(e)
     throw new Error(e)
@@ -466,8 +484,9 @@ app.get(credentialPath, async (req, res) => {
 
 app.get(svgPath, async (req, res) => {
   const vc = await getVerifiableCredential(req.query.id, 'lds').catch(e => {
-    return res.status(404).json(e)
+    res.status(404).json(e)
   })
+  if (!vc) return false
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
   <svg xmlns="http://www.w3.org/2000/svg" xmlns:openbadges="https://purl.imsglobal.org/ob/v3p0" viewBox="0 0 856 549.8">
     <openbadges:credential>
@@ -495,7 +514,7 @@ ${JSON.stringify(vc, null, 2)}
      .achievement {
       font-size: 36pt;
      }
-     .description {
+     .fieldOfStudy {
       font-size: 24pt;
      }
      .issuer {
@@ -513,7 +532,7 @@ ${JSON.stringify(vc, null, 2)}
       <p xmlns="http://www.w3.org/1999/xhtml" class="achievement ModernText">${vc?.credentialSubject?.achievement?.name}</p>
     </foreignObject>
     <foreignObject requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" x="75" y="250" width="706" height="150">
-      <p xmlns="http://www.w3.org/1999/xhtml" class="description ModernText">${vc?.credentialSubject?.achievement?.description}</p>
+      <p xmlns="http://www.w3.org/1999/xhtml" class="fieldOfStudy ModernText">${vc?.credentialSubject?.achievement?.fieldOfStudy}</p>
     </foreignObject>
     <foreignObject requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" x="75" y="400" width="706" height="100">
       <p xmlns="http://www.w3.org/1999/xhtml" class="issuer ModernText">${vc?.issuer?.name}</p>
