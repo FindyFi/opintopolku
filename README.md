@@ -1,5 +1,7 @@
 # Opintopolku-todisteet
-Vahvistettavia todisteita oman opintopolun tiedoista
+Vahvistettavia todisteita oman opintopolun tiedoista.
+
+Tutustu demoon osoitteessa [opintopolku.findy.fi](https://opintopolku.findy.fi/).
 
 # Käyttöönotto
 
