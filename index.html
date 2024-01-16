@@ -5,108 +5,197 @@
    <link rel="icon" href="favicon.png"/>
    <title>Opintopolku vahvistettaviin todisteisiin</title>
    <style>
-      body {
-        background-color: rgba(13, 3, 66, 0.1);
-        color: #0d0342;
-        font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-      }
-      h1 {
-        font-size: 48pt;
-        text-align: center;
-      }
-      form {
-        background-color: #4ffaff;
-        border: 1px outset #0d0342;
-        border-radius: 0.5em;
-        font-size: larger;
-        margin: 2em auto;
-        max-width: 40em;
-        padding: 1em;
-        position: sticky;
-        top: 1em;
-        z-index: 3;
-      }
-      #credentials {
-        margin: 1em auto;
-        width: calc(100% - 80mm);
-      }
-      ul {
-        display: flex;
-        flex-wrap: wrap;
-        margin: 30mm 0 0 0;
-        padding: 0;
-      }
-      li {
-        list-style-type: none;
-        margin: 1em;
-        padding: 0;
-        position: relative;
-      }
-      .card img {
-        transition: 0.5s all;
-        z-index: 1;
-      }
-      .card img, .card .code {
-        box-sizing: border-box;
-        height: 108.96mm;
-        width: 171.2mm;
-      }
-      .card .code {
-        background-color: #4ffaff;
-        border: 1px outset #0d0342;
-        border-radius: 4.6mm;
-        box-shadow: -0.5em 1em 2em #0d0342;
-        font-family: 'Consolas', 'Lucida Sans Monospace', 'Courier New', Courier, monospace;
-        font-size: x-small;
-        left: 0;
-        margin: 0;
-        opacity: 0;
-        overflow: auto;
-        padding: 1em;
-        position: absolute;
-        top: 0;
-        transform: rotate3d(0, 1, 0, 180deg) scale(1);
-        transition: 0.5s all;
-        white-space: pre;
-        z-index: 0;
-      }
-      .card.turned img {
-        transform: rotate3d(0, 1, 0, 180deg) scale(1.5);
-      }
-      .card.turned .code {
-        opacity: 1;
-        transform: rotate3d(0, 0, 0, 0) scale(1.5);
-        z-index: 2;
-      }
-      .download {
-        display: block;
-        margin: 0;
-        text-align: center;
-      }
+    html, body {
+     margin: 0;
+     padding: 0;
+    }
+    body {
+     background-color: rgba(13, 3, 66, 0.1);
+     color: #0d0342;
+     font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+     min-height: 100vh;
+     padding-bottom: 6em;
+     position: relative;
+    }
+    h1 {
+     font-size: 48pt;
+     text-align: center;
+    }
+    form {
+     background-color: #4ffaff;
+     border: 1px outset #0d0342;
+     border-radius: 0.5em;
+     font-size: larger;
+     margin: 2em auto;
+     max-width: 50em;
+     padding: 1em;
+     position: sticky;
+     top: 1em;
+     z-index: 3;
+    }
+    .info {
+     font-size: larger;
+     margin: 2em auto;
+     max-width: 50em;
+    }
+    #credentials {
+     margin: 1em auto;
+     width: calc(100% - 80mm);
+    }
+    #credentials ul {
+     display: flex;
+     flex-wrap: wrap;
+    justify-content: space-evenly;
+     margin: 0;
+     padding: 0;
+    }
+    li {
+     list-style-type: none;
+     margin: 1em;
+     padding: 0;
+     position: relative;
+    }
+    .info ol li {
+     list-style-type: upper-alpha;
+    }
+    .card img {
+     transition: 0.5s all;
+     z-index: 2;
+    }
+    .card img, .card .code {
+     /*
+     aspect-ratio: 8.56/5.398;
+     */
+     box-sizing: border-box;
+     /*
+     height: 53.98mm;
+     width: 85.6mm;
+     */
+     height: 80.97mm;
+     width: 128.4mm;
+    }
+    .card .code {
+     background-color: #4ffaff;
+     border: 1px outset #0d0342;
+     border-radius: 4.6mm;
+     box-shadow: -0.5em 1em 2em #0d0342;
+     font-family: 'Consolas', 'Lucida Sans Monospace', 'Courier New', Courier, monospace;
+     font-size: x-small;
+     left: 0;
+     margin: 0;
+     opacity: 0;
+     overflow: auto;
+     padding: 1em;
+     position: absolute;
+     top: 0;
+     transform: rotate3d(0, 1, 0, 180deg) scale(1);
+     transition: 0.5s all;
+     white-space: pre;
+     z-index: 1;
+    }
+    .card.turned img {
+     transform: rotate3d(0, 1, 0, 180deg) scale(1.5);
+     z-index: 1;
+    }
+    .card.turned .code {
+     opacity: 1;
+     transform: rotate3d(0, 0, 0, 0) scale(1.5);
+     z-index: 2;
+    }
+    .download {
+     display: block;
+     margin: 0;
+     text-align: center;
+    }
+    .footer {
+     background: linear-gradient(16deg, #41ebff, #0d0342);
+     bottom: 0;
+     color: #FFF;
+     margin: 0;
+     padding: 2em;
+     position: absolute;
+     text-align: center;
+     width: 100%;
+    }
+    .footer a {
+     color: #FFF;
+    }
+    .language-switcher {
+     background-color: #4ffaff;
+     border: 1px outset #0d0342;
+     color: #0d0342;
+     display: flex;
+     border-radius: 2em;
+     padding: 0.25em 0 0.25em 0.5em;
+     position: absolute;
+     top: 2em;
+     right: 2em;
+    }
+    .language-switcher li {
+     background-color: #0d0342;
+     border: 1px outset #4ffaff;
+     border-color: #0d0342;
+     border-width: 1px;
+     border-style: outset;
+     border-radius: 2em;
+     box-sizing: border-box;
+     color: #FFF;
+     list-style-type: none;
+     margin: 0 0.5em 0 0;
+     min-height: 2em;
+     min-width: 2em;
+     padding: 0.25em 0 0 0;
+     text-align: center;
+     width: 2em;
+    }
+    .language-switcher li.selected {
+     background-color: #FFF;
+     border-color: #4ffaff;
+     border-style: inset;
+     color: #0d0342;
+    }
    </style>
   </head>
   <body>
-   <h1>Opintopolku todisteisiin</h1>
+   <h1 lang="fi">Opintopolku todisteisiin</h1>
+   <h1 lang="sv">Digitala Studieinfo-bevis</h1>
+   <h1 lang="en">Study credentials</h1>
    <form action="./credentials">
-    <label>Opintopolun <a href="https://opintopolku.fi/koski/omattiedot" target="_blank">jakolinkki</a>: <input name="url" size="75" /></label>
+    <label for="url" lang="fi">Opintopolun jakolinkki:</label>
+    <label for="url" lang="sv">Min Studieinfo delningslänk:</label>
+    <label for="url" lang="en">My Studyinfo sharing link:</label>
+    <input name="url" size="75" />
     <input type="hidden" name="lang" value="fi"/>
-    <input type="submit" value="Hae"/>
+    <input lang="fi" type="submit" value="Hae"/>
+    <input lang="sv" type="submit" value="Skicka in"/>
+    <input lang="en" type="submit" value="Get"/>
    </form>
+   <div class="info" lang="fi"><p>Tämän palvelun avulla voit muodostaa omista opintotiedoistasi vahvistettavia todisteita.</p><p>Kirjautumalla Opetushallituksen <a href="https://opintopolku.fi/koski/omattiedot" target="_blank">Oma opintopolku</a> -palveluun voit muodostaa valitsemistasi opinnoista jakolinkin. Lähetä jakolinkki yllä olevalla lomakkeella, niin tämä palvelu muodostaa opintotiedoistasi <a href="https://www.1edtech.org/standards/open-badges">Open Badges 3 -määrityksen</a> mukaisia digitaalisia todisteita.</p><p>Voit käyttää todisteita haluamallasi tavalla, mutta huomaa seuraavat asiat:</p><ol><li>Tästä kokeilupalvelusta saamasi todisteet eivät ole minkään virallisen tahon varmentamia.</li><li>Opetushallitus ei ole osallistunut tämän palvelun toteutukseen. Palvelu on toteutettu avoimia rajapintoja hyödyntäen.</li><li>Palvelun tarjoaja ei vastaa todisteissa olevista teknisistä tai sisällöllisistä virheistä.</li></ul></div>
+   <div class="info" lang="sv"><p>Med denna tjänst kan du skapa verifierbara bevis på dina egna studiedata.</p><p>Genom att logga in på Utbildningsstyrelsens <a href="https://studieinfo.fi/koski/omattiedot" target="_blank">Min Studieinfo</a> -tjänst kan du skapa en delningslänk av de studier du har valt. Skicka en delningslänk med hjälp av formuläret ovan, så skapar den här tjänsten digitala bevis för dina studiedata enligt <a href="https://www.1edtech.org/standards/open-badges" target="_blank">Open Badges 3 -specifikationen</a>.</p><p>Du kan använda bevisen hur du vill, men observera följande:</p><ol><li>Bevisen du får från denna testtjänst är inte certifierad av något officiellt organ.</li><li>Utbildningsstyrelsen har inte deltagit i genomförandet av denna tjänst. Tjänsten har implementerats med öppna gränssnitt.</li><li>Tjänsteleverantören ansvarar inte för tekniska eller innehållsmässiga fel i bevisningen.</li></ul></div>
+   <div class="info" lang="en"><p>This service lets you get verifiable credentials of your own study info.</p><p>By logging in to Finnish National Agency for Education's <a href="https://studyinfo.fi/koski/omattiedot" target="_blank">My Studyinfo</a> service, you can create a sharing link of the studies you have chosen. Send a sharing link using the form above, and this service will create digital credentials based on the <a href="https://www.1edtech.org/standards/open-badges" target="_blank">Open Badges 3 specification</a>.</p><p>You can use the credentials however you like, but please note the following:</p><ol><li>The credentials you get from this trial service are not issued by any official body.</li><li>The Finnish National Agency for Education has not participated in the implementation of this service. The service has been implemented using open interfaces.</li><li>The service provider is not responsible for technical or content errors in the credentials.</li></ul></div>
    <div id="credentials">
    </div>
+   <p class="footer" lang="fi">Palvelun on toteuttanut <a href="https://findy.fi/" target="_blank">Findynet Osuuskunta</a>. Lähdekoodi on saatavilla <a href="https://github.com/FindyFi/opintopolku" target="_blank">GitHubista</a>.<p>
+   <p class="footer" lang="sv">Tjänsten har implementerats av <a href="https://findy.fi/en/" target="_blank">Findynet kooperativ</a>. Källkoden är tillgänglig på <a href="https://github.com/FindyFi/opintopolku" target="_blank">GitHub</a>.<p>
+   <p class="footer" lang="en">Service created by <a href="https://findy.fi/en/" target="_blank">Findynet Cooperative</a>. Source code available on <a href="https://github.com/FindyFi/opintopolku" target="_blank">GitHub</a>.<p>
    <script>
     const f = document.querySelector('form')
     const c = document.querySelector('#credentials')
     const params = new URLSearchParams(document.location.search)
-    const lang = params.get('lang') || 'fi'
+    let currentLanguage = params.get('lang') || 'fi'
     const url = params.get('url') || ''
-    f.lang.value = lang
+    const translated = document.querySelectorAll(`[lang]:not([lang="${currentLanguage}"])`)
+    translated.forEach(elem => {
+     elem.style.display = 'none'
+    })
+    setTitle()
+    f.lang.value = currentLanguage
     f.url.value = url
     f.onsubmit = async (e) => {
      e.preventDefault()
-     const getParams = `url=${encodeURIComponent(f.url.value)}` +
-                       `&lang=${encodeURIComponent(f.lang.value)}`
-     history.pushState({lang, url}, '', `${document.location.href.split('?')[0]}?${getParams}`)
+     const getParams = `lang=${encodeURIComponent(f.lang.value)}` +
+                       `&url=${encodeURIComponent(f.url.value)}`
+     history.pushState({currentLanguage, url}, '', `${document.location.href.split('?')[0]}?${getParams}`)
      const credsUrl = `${f.action}?${getParams}`
      const response = await fetch(credsUrl)
      const ul = await response.text()
@@ -127,6 +216,58 @@
         e.preventDefault()
         this.classList.toggle('turned')
       }
+     }
+    }
+
+     const languages = ['fi', 'sv', 'en']
+    const defaultLanguage = currentLanguage
+    const translatedElementsSelector = '[lang]'
+    const switcher = document.createElement('ul')
+    switcher.className = 'language-switcher'
+    languages.forEach((lang) => {
+     const li = document.createElement('li')
+     li.textContent = lang
+     li.onclick = (e) => {
+      currentLanguage = lang
+      const currentParams = new URLSearchParams(document.location.search)
+      let newParams = `lang=${encodeURIComponent(lang)}`
+      const currentUrl = currentParams.get('url')
+      if (currentUrl) {
+       newParams += `&url=${encodeURIComponent(currentUrl)}`
+      }
+      history.pushState({lang, currentUrl}, '', `${document.location.href.split('?')[0]}?${newParams}`)
+      const lis = switcher.querySelectorAll('li')
+      for (l of lis) {
+       l.classList.remove('selected')
+      }
+      li.classList.add('selected')
+      const html = document.querySelector(':root')
+      html.lang = lang
+      setTitle()
+      const elems = document.querySelectorAll(translatedElementsSelector)
+      for (const elem of elems) {
+       if (elem.parentNode == switcher) {
+        continue
+       }
+       if (elem.lang && elem.lang != lang) {
+        elem.style.display = 'none'
+       }
+       else {
+        elem.style.display = ['input', 'label'].includes(elem.tagName.toLowerCase()) ? 'inline': 'block'
+       }
+      }
+     }
+     if (lang == defaultLanguage) {
+      // li.onclick()
+      li.className = 'selected'
+     }
+     switcher.appendChild(li)
+    })
+    document.body.appendChild(switcher)
+    function setTitle() {
+     const h1 = document.querySelector(`h1[lang="${currentLanguage}"]`)
+     if (h1) {
+      document.title = h1.textContent
      }
     }
    </script>
