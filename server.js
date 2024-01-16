@@ -338,6 +338,7 @@ app.get(credentialListPath, async (req, res) => {
           "narrative": ""
         },
         "description": null,
+        "fieldOfStudy": "",
         "name": null
       }
       if (fieldOfStudy) {
