@@ -519,13 +519,12 @@ ${JSON.stringify(vc, null, 2)}
       font-size: 24pt;
      }
      .issuer {
- /*
-      color: #0a00be;
- */
       color: #0d0342;
       font-size: 18pt;
+      /*
       position: absolute;
       bottom: 0;
+      */
      }
     </style>
     <rect class="card" x="0" y="0" width="856" height="549.8" rx="31" ry="31" />
