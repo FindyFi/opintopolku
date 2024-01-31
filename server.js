@@ -528,13 +528,13 @@ ${JSON.stringify(vc, null, 2)}
      }
     </style>
     <rect class="card" x="0" y="0" width="856" height="549.8" rx="31" ry="31" />
-    <foreignObject requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" x="75" y="25" width="706" height="225">
+    <foreignObject x="75" y="25" width="706" height="225">
       <p xmlns="http://www.w3.org/1999/xhtml" class="achievement ModernText">${vc?.credentialSubject?.achievement?.name}</p>
     </foreignObject>
-    <foreignObject requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" x="75" y="250" width="706" height="150">
+    <foreignObject x="75" y="250" width="706" height="150">
       <p xmlns="http://www.w3.org/1999/xhtml" class="fieldOfStudy ModernText">${vc?.credentialSubject?.achievement?.fieldOfStudy}</p>
     </foreignObject>
-    <foreignObject requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" x="75" y="400" width="706" height="100">
+    <foreignObject x="75" y="450" width="706" height="100">
       <p xmlns="http://www.w3.org/1999/xhtml" class="issuer ModernText">${vc?.issuer?.name}</p>
     </foreignObject>
   </svg>`
