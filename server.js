@@ -546,9 +546,9 @@ ${JSON.stringify(vc, null, 2)}
       ]]>
     </openbadges:credential>
     <defs>
-      <linearGradient id="findy-card" x1="0" x2="0" y1="1" y2="0" gradientTransform="rotate(16)">
-        <stop offset="0%" stop-color="#41ebff" />
-        <stop offset="100%" stop-color="#0a00be" />
+      <linearGradient id="findy-card" x1="0" x2="0" y1="0" y2="1" gradientTransform="rotate(16)">
+       <stop offset="0%" stop-color="#0a00be" />
+       <stop offset="100%" stop-color="#41ebff" />
       </linearGradient>
     </defs>
     <style type="text/css">
