@@ -4,16 +4,23 @@
    <meta charset="utf-8">
    <link rel="icon" href="favicon.png"/>
    <title>Opintopolku vahvistettaviin todisteisiin</title>
+   <meta property="og:type" content="website">
+   <meta property="og:title" content="Opintopolku vahvistettaviin todisteisiin">
+   <meta property="og:url" content="https://opintopolku.findy.fi/">
+   <meta property="og:image" content="https://findy.fi/wp-content/uploads/2024/01/findy-f-256-256.png">
+   <meta property="og:description" content="Tämän kokeilupalvelun avulla voit muodostaa omista opintotiedoistasi vahvistettavia todisteita.">
    <style>
+    * {
+      box-sizing: border-box;
+    }
     html, body {
      margin: 0;
      padding: 0;
     }
     body {
      background-color: rgba(13, 3, 66, 0.1);
-     box-sizing: border-box;
      color: #0d0342;
-     font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+     font-family: Verdana,Helvetica,Arial,Calibri,'Gill Sans','Gill Sans MT','Trebuchet MS', sans-serif;
      min-height: 100vh;
      padding-bottom: 6em;
      position: relative;
@@ -32,12 +39,15 @@
      padding: 1em;
      position: sticky;
      top: 1em;
-     z-index: 3;
+     z-index: 10;
     }
     .info {
      font-size: larger;
      margin: 2em auto;
      max-width: 50em;
+    }
+    .loading {
+     text-align: center;
     }
     #credentials {
      margin: 1em auto;
@@ -106,7 +116,39 @@
     .download {
      display: block;
      margin: 0;
+     padding: 0;
      text-align: center;
+    }
+    .oid4vciOffer {
+     bottom: 50%;
+     height: 256px;
+     left: 50%;
+     margin: 0;
+     padding: 0;
+     position: absolute;
+     right: 50%;
+     top: 50%;
+     transform: translate(-50%, -55%);
+     width: 256px;
+     z-index: 5;
+    }
+    .oid4vciOffer.hidden {
+     display: none;
+    }
+    .oid4vciOffer img {
+     background-color: #FFF;
+     border-radius: 0.5em;
+     padding: 0.5em;
+    }
+    .chapi {
+     display: block;
+     background-color: #0d0342;
+     border-radius: 0.5em;
+     color: #4ffaff;
+     font-size: larger;
+     font-weight: bold;
+     margin: 2em auto 1em auto;
+     padding: 0.25em;
     }
     .footer {
      background: linear-gradient(16deg, #41ebff, #0d0342);
@@ -179,6 +221,11 @@
    <p class="footer" lang="fi">Palvelun on toteuttanut <a href="https://findy.fi/" target="_blank">Findynet Osuuskunta</a>. Lähdekoodi on saatavilla <a href="https://github.com/FindyFi/opintopolku" target="_blank">GitHubista</a>.<p>
    <p class="footer" lang="sv">Tjänsten har implementerats av <a href="https://findy.fi/en/" target="_blank">Findynet kooperativ</a>. Källkoden är tillgänglig på <a href="https://github.com/FindyFi/opintopolku" target="_blank">GitHub</a>.<p>
    <p class="footer" lang="en">Service created by <a href="https://findy.fi/en/" target="_blank">Findynet Cooperative</a>. Source code available on <a href="https://github.com/FindyFi/opintopolku" target="_blank">GitHub</a>.<p>
+   <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+   <script src="https://unpkg.com/credential-handler-polyfill@3/dist/credential-handler-polyfill.min.js"></script>
+   <script type="module">
+    await credentialHandlerPolyfill.loadOnce()
+   </script>
    <script>
     const f = document.querySelector('form')
     const c = document.querySelector('#credentials')
@@ -189,11 +236,20 @@
     translated.forEach(elem => {
      elem.style.display = 'none'
     })
+    const allCredentials = {
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://www.w3.org/2018/credentials/examples/v1"
+      ],
+      "type": "VerifiablePresentation",
+      verifiableCredential: [],
+    }
     setTitle()
     f.lang.value = currentLanguage
     f.url.value = url
     f.onsubmit = async (e) => {
      e.preventDefault()
+     c.innerHTML = '<p class="loading">...</p>'
      const getParams = `lang=${encodeURIComponent(f.lang.value)}` +
                        `&url=${encodeURIComponent(f.url.value)}`
      history.pushState({currentLanguage, url}, '', `${document.location.href.split('?')[0]}?${getParams}`)
@@ -209,18 +265,66 @@
       }
       const resp = await fetch(a.href)
       const vc = await resp.json()
+      allCredentials.verifiableCredential.push(vc)
       const code = document.createElement('div')
       code.className = 'code'
       code.innerHTML = JSON.stringify(vc, null, 2)
       card.appendChild(code)
       card.ondblclick = async function(e) {
-        e.preventDefault()
-        this.classList.toggle('turned')
+       e.preventDefault()
+       this.classList.toggle('turned')
       }
      }
+     const oidOffers = c.querySelectorAll('.oid4vci')
+     for (const offer of oidOffers) {
+      const offerDiv = document.createElement('div')
+      offerDiv.className = 'oid4vciOffer hidden empty'
+      offer.parentNode.parentNode.appendChild(offerDiv)
+      offer.onclick = function(e) {
+       // e.preventDefault()
+       if (offerDiv.classList.contains('empty')) {
+        console.log(`Creating QR code for ${offer.href}`)
+        new QRCode(offerDiv, offer.href)
+        offerDiv.classList.remove('empty')
+       }
+       offerDiv.classList.toggle('hidden')
+      }
+      offerDiv.onclick = function(e) {
+       const currentHref = offer.href
+       offer.href = offer.dataset.offeruri
+       offer.dataset.offeruri = currentHref
+       offerDiv.innerHTML = ''
+       console.log(`Creating QR code for ${offer.href}`)
+       new QRCode(offerDiv, offer.href)
+      }
+     }
+     const credentialType = 'VerifiablePresentation'
+     const webCredentialWrapper = new WebCredential(
+      credentialType, allCredentials, {
+       recommendedHandlerOrigins: [
+       'https://demo.vereswallet.dev/'
+       ]
+      }
+     )
+     const button = document.createElement('button')
+     button.className = 'chapi'
+     button.innerHTML = '<span lang="fi">Lisää kaikki web-lompakkoon (CHAPI)</span><span lang="en">Add all to web wallet (CHAPI)</span><span lang="sv">Spara alla i plånboken (CHAPI)</span>'
+     button.onclick = async function(e) {
+      console.log('Attempting to store all credentials via CHAPI');
+      const result = await navigator.credentials.store(webCredentialWrapper);
+      if(!result) {
+       console.warn('Store credential operation did not succeed');
+       console.log(webCredentialWrapper)
+      }
+     }
+     c.appendChild(button)
+     const spans = document.querySelectorAll(`[lang]:not([lang="${currentLanguage}"])`)
+     spans.forEach(span => {
+      span.style.display = 'none'
+     })
     }
 
-     const languages = ['fi', 'sv', 'en']
+    const languages = ['fi', 'sv', 'en']
     const defaultLanguage = currentLanguage
     const translatedElementsSelector = '[lang]'
     const switcher = document.createElement('ul')
@@ -229,6 +333,7 @@
      const li = document.createElement('li')
      li.textContent = lang
      li.onclick = (e) => {
+      f.lang.value = lang
       currentLanguage = lang
       const currentParams = new URLSearchParams(document.location.search)
       let newParams = `lang=${encodeURIComponent(lang)}`
@@ -254,7 +359,7 @@
         elem.style.display = 'none'
        }
        else {
-        elem.style.display = ['input', 'label'].includes(elem.tagName.toLowerCase()) ? 'inline': 'block'
+         elem.style.display = ['input', 'label', 'span'].includes(elem.tagName.toLowerCase()) ? 'inline': 'block'
        }
       }
      }
