@@ -21,12 +21,13 @@ import openBadgeContext from './context-3.0.3.json' assert { type: 'json' }
 
 const CREDENTIALS_DB_FILE = 'credentials.db'
 
-const badgeContexts = {}
-
 const credentialListPath = '/credentials'
 const credentialPath = '/credential'
 const svgPath = '/svg'
+const oid4vcPath = '/openid'
+const credentialType = "OpenBadgeCredential"
 
+const badgeContexts = {}
 badgeContexts['https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json'] = openBadgeContext
 badgeContexts['https://purl.imsglobal.org/spec/ob/v3p0/extensions.json'] = {
   "@context": {
@@ -224,7 +225,10 @@ function getName(object, lang) {
 
 async function getVerifiableCredential(id, format) {
   const {alias, identifier} = await getMyDid()
-  const select = `SELECT * FROM credential WHERE id = '${id}'`
+  // id can be either a long URL identifier or a row identifier
+  const where = id.includes('http') ? `id = '${id}'` : `rowId = ${id}`
+  const select = `SELECT * FROM credential WHERE ${where}`    
+  // console.log(select)
   const row = await db_get(select)
   if (!row) {
     throw new Error(`Tunnisteella ${id} ei löytynyt todisteita.`)
@@ -239,14 +243,40 @@ async function getVerifiableCredential(id, format) {
   return vc
 }
 
+function createOffer(id, name) {
+  const authCode = [encodeURIComponent(name), encodeURIComponent(id)].join('/')
+  const offer = {
+    "credential_issuer": [baseUrl, authCode].join('/'),
+    "credential_configuration_ids": [
+      credentialType,
+    ],
+    "grants": {
+      "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
+        // "pre-authorized_code": id,
+        "pre-authorized_code": authCode,
+      }
+      /*
+        "authorization_code": {
+        "issuer_state": id
+      }
+*/
+    }
+  }
+  // console.log(offer)
+  return offer
+}
+
 const app = express()
 app.set('trust proxy', 1)
 app.use(cors())
+app.use(express.urlencoded({ extended: true }))
 app.get('/favicon.png', (req, res) => {
+  console.log(req.method, req.url)
   res.sendFile(new URL('./favicon.png', import.meta.url).pathname)
 })
 
 app.get('/', async (req, res) => {
+  console.log(req.method, req.url)
   res.sendFile(new URL('./index.html', import.meta.url).pathname)
 })
 
@@ -255,6 +285,7 @@ app.get(didDocPath, getDidDocument)
 app.get('/did.json', getDidDocument) // hack for Open Badges 3.0 Verifier that doesn't know .well-known
 
 app.get(credentialListPath, async (req, res) => {
+  console.log(req.method, req.url)
   const url = req.query.url.replace('koski/opinnot', 'koski/api/opinnot')
   const lang = req.query.lang || 'fi'
   const {alias, identifier} = await getMyDid()
@@ -279,7 +310,6 @@ app.get(credentialListPath, async (req, res) => {
   })
   if (!obj) return false
   const stmt = db.prepare("REPLACE INTO credential (id, data) VALUES (?, ?);")
-  let html = `<ul>`
   const person = obj['henkilö']
   if (!person) {
     console.error('Ei henkilöä!')
@@ -297,6 +327,7 @@ app.get(credentialListPath, async (req, res) => {
     console.warn(error)
     return false
   }
+  const credentialPromises = []
   schools.forEach(school => {
     const creator = {
       "id": null,
@@ -426,7 +457,7 @@ app.get(credentialListPath, async (req, res) => {
           "https://purl.imsglobal.org/spec/ob/v3p0/extensions.json"
         ],
         "id": achievement.id,
-        "type": ["VerifiableCredential", "OpenBadgeCredential"],
+        "type": ["VerifiableCredential", credentialType],
         "name": achievement.name,
         "credentialSubject": {
           "id": achievement.id,
@@ -457,21 +488,39 @@ app.get(credentialListPath, async (req, res) => {
           }
         ]
       }
-      stmt.run(achievement.id, JSON.stringify(credential))
-      const file = achievement.id.split('/').at(-1)
-      html += `<li class="${achievement.achievementType}"><a href="${credentialPath}?id=${encodeURIComponent(achievement.id)}">` +
-              `<span class="card"><img src="${svgPath}?id=${encodeURIComponent(achievement.id)}" alt="${achievement.name}" /></span></a>` +
-              `<span class="download">Lataa: ` +
-              `<a download="${file}.svg" href="${svgPath}?id=${encodeURIComponent(achievement.id)}">SVG</a> ` +
-              `<a download="${file}.json"  href="${credentialPath}?id=${encodeURIComponent(achievement.id)}">JSON</a> ` +
-              `</span></li>`
+      const promise = new Promise((resolve, reject) => {
+        stmt.run(achievement.id, JSON.stringify(credential), function(err) {
+          if (err) reject(err)
+          const rowId = this.lastID
+          const file = achievement.id.split('/').at(-1)
+          const offer = createOffer(rowId, file)
+          console.log(JSON.stringify(offer, null, 2))
+          console.log(`Expecting request to ${offer.credential_issuer}/.well-known/openid-credential-issuer`)
+          const offerLink = 'openid-credential-offer://?credential_offer=' + encodeURIComponent(JSON.stringify(offer))
+          const offerUri = `${offer.credential_issuer}/credential-offer.json`
+          const li = `<li class="${achievement.achievementType}"><a href="${credentialPath}?id=${encodeURIComponent(achievement.id)}">` +
+                     `<span class="card"><img src="${svgPath}?id=${encodeURIComponent(achievement.id)}" alt="${achievement.name}" /></span></a>` +
+                     `<span class="download"><span lang="fi">Lataa</span> <span lang="en">Download</span> <span lang="sv">Ladda ned</span>: ` +
+                     `<a download="${file}.svg" href="${svgPath}?id=${encodeURIComponent(achievement.id)}">SVG</a> ` +
+                     `<a download="${file}.json" href="${credentialPath}?id=${encodeURIComponent(achievement.id)}">JSON</a> ` +
+                     `<a class="oid4vci" href="${offerLink}" data-offeruri="${offerUri}"><span lang="fi">lompakkoon</span> <span lang="en">to wallet</span> <span lang="sv">till plånboken</span></a>` +
+                     `</span></li>`
+          resolve(li)
+        })
+      })
+      credentialPromises.push(promise)
     })
   })
-  html += `</ul>`
+  let html = '<ul>'
+  await Promise.all(credentialPromises).then(results => {
+    html += results.join(' ')
+  })
+  html += '</ul>'
   res.send(html)
 })
 
 app.get(credentialPath, async (req, res) => {
+  console.log(req.method, req.url)
   const fmt = 'lds'
   if (req.query.format == 'jwt') {
     const fmt = req.query.format
@@ -484,6 +533,7 @@ app.get(credentialPath, async (req, res) => {
 })
 
 app.get(svgPath, async (req, res) => {
+  console.log(req.method, req.url)
   const vc = await getVerifiableCredential(req.query.id, 'lds').catch(e => {
     res.status(404).json(e)
   })
@@ -529,17 +579,182 @@ ${JSON.stringify(vc, null, 2)}
      }
     </style>
     <rect class="card" x="0" y="0" width="856" height="549.8" rx="31" ry="31" />
-    <foreignObject requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" x="75" y="25" width="706" height="225">
+    <foreignObject x="75" y="25" width="706" height="225">
       <p xmlns="http://www.w3.org/1999/xhtml" class="achievement ModernText">${vc?.credentialSubject?.achievement?.name}</p>
     </foreignObject>
-    <foreignObject requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" x="75" y="250" width="706" height="150">
+    <foreignObject x="75" y="250" width="706" height="150">
       <p xmlns="http://www.w3.org/1999/xhtml" class="fieldOfStudy ModernText">${vc?.credentialSubject?.achievement?.fieldOfStudy}</p>
     </foreignObject>
-    <foreignObject requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" x="75" y="400" width="706" height="100">
+    <foreignObject x="75" y="400" width="706" height="100">
       <p xmlns="http://www.w3.org/1999/xhtml" class="issuer ModernText">${vc?.issuer?.name}</p>
     </foreignObject>
   </svg>`
   res.setHeader('Content-Type', 'image/svg+xml').send(svg)
+})
+
+app.get('/:name/:id/credential-offer.json', async (req, res) => {
+  console.log(req.method, req.url)
+  console.log(req.params)
+  const id  = req.params.id
+  const name  = req.params.name
+  const offer = createOffer(id, name)
+  console.log(JSON.stringify(offer, null, 2))
+  console.log(`Expecting request to ${offer.credential_issuer}/.well-known/openid-credential-issuer`)
+  res.json(offer)
+})
+
+app.get('/:name/:id/.well-known/oauth-authorization-server', async (req, res) => {
+  console.log(req.method, req.url)
+  const id  = req.params.id
+  const name  = req.params.name
+  const meta = {
+    "issuer": [baseUrl, encodeURIComponent(name), encodeURIComponent(id)].join('/'),
+    "token_endpoint": `${baseUrl}/token`,
+    "response_types_supported": [
+      "token"
+    ]
+  }
+  console.log(JSON.stringify(meta, null, 2))
+  res.json(meta)
+})
+
+app.get('/:name/:id/.well-known/openid-credential-issuer', async (req, res) => {
+  console.log(req.method, req.url)
+  console.log(req.params)
+  const id  = req.params.id
+  const name  = req.params.name
+  console.log(req.headers)
+  const meta = {
+    "credential_issuer": [baseUrl, encodeURIComponent(name), encodeURIComponent(id)].join('/'),
+    "credential_endpoint": `${baseUrl}${oid4vcPath}`,
+    "credential_identifiers_supported": true,
+    "display": [
+      {
+        "name": "Findynet Study Credential demo",
+        "locale": "en-US",
+        "logo": {
+          "uri": `${baseUrl}/favicon.png`
+        }
+      },
+      {
+        "name": "Findynetin Opintopolku-todistedemo",
+        "locale": "fi-FI",
+        "logo": {
+          "uri": `${baseUrl}/favicon.png`
+        }
+      },
+      {
+        "name": "Findynets Min Studieinfo-bevisdemo",
+        "locale": "sv-SE",
+        "logo": {
+          "uri": `${baseUrl}/favicon.png`
+        }
+      }
+    ],
+    "credential_configurations_supported": {}
+  }
+  meta.credential_configurations_supported[credentialType] = {
+    "format": "ldp_vc",
+    // "credential_signing_alg_values_supported": [
+    //   "Ed25519Signature2020"
+    // ],
+    "credential_definition":{
+      "type": [
+        "VerifiableCredential",
+        credentialType
+      ],
+      // "credentialSubject": {
+      // }
+    },
+    "display": [
+      {
+        "name": "My Studyinfo credential",
+        "locale": "en-US",
+        "logo": {
+          "uri": `${baseUrl}/favicon.png`
+        }
+      },
+      {
+        "name": "Opintopolkutodiste",
+        "locale": "fi-FI",
+        "logo": {
+          "uri": `${baseUrl}/favicon.png`
+        }
+      },
+      {
+        "name": "Min Studieinfo-bevis",
+        "locale": "sv-SE",
+        "logo": {
+          "uri": `${baseUrl}/favicon.png`
+        }
+      }
+    ],
+  }
+  console.log(JSON.stringify(meta, null, 2))
+  res.json(meta)
+})
+
+app.get('/authorize', async (req, res) => {
+  console.log(req.method, req.url)
+  // const id = req.query.issuer_state
+  const uri = req.query.redirect_uri
+  const loc = uri + (uri.includes('?') ? '&' : '?') +
+              `code=${encodeURIComponent(authCode)}`
+  res.redirect(302, loc)
+})
+
+app.post('/token', async (req, res) => {
+  console.log(req.method, req.url)
+  console.log(req.body)
+  const json = {
+    "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6Ikp..sHQ",
+    "token_type": "bearer",
+    "expires_in": 86400,
+  }
+  if (req.body.pre-authorized_code) {
+    const id = req.body.pre-authorized_code
+    json.authorization_details = [
+      {
+        "type": "openid_credential",
+        "credential_configuration_id": credentialType,
+        "credential_identifiers": [ id ]
+      }
+    ]
+  }
+  res.setHeader('Cache-Control', 'no-store').json(json)
+})
+
+app.post(`/:name/:id/${oid4vcPath}`, async (req, res) => {
+  const vc = await getVerifiableCredential(id, fmt).catch(e => {
+    res.status(404).json(e)
+    throw new Error(e)
+  })
+  res.json({"credential": vc})
+})
+
+app.post(oid4vcPath, async (req, res) => {
+  console.log(req.method, req.url)
+  console.log(req.body)
+/*
+  const vc = await getVerifiableCredential(req.query.id, 'lds').catch(e => {
+    res.status(404).json(e)
+  })
+  let id = ''
+  const format = req.body.format
+  let fmt = 'lds'
+  if (format.includes('jwt')) {
+    fmt = 'jwt'
+  }
+*/
+  const fmt = 'lds'
+  if (req.body.credential_identifier) {
+    id = req.body.credential_identifier
+  }
+  const vc = await getVerifiableCredential(id, fmt).catch(e => {
+    res.status(404).json(e)
+    throw new Error(e)
+  })
+  res.json({"credential": vc})
 })
 
 const server = app.listen(httpPort, (err) => {
