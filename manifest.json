@@ -1,7 +1,7 @@
 {
     "id": "/?homescreen=1",
-    "short_name": "Find a job",
-    "name": "Find Your Next Job",
+    "short_name": "Opintopolku",
+    "name": "Opintopolku todisteina",
     "icons": [
         {
           "src": "windows11/SmallTile.scale-100.png",
@@ -458,7 +458,7 @@
     "scope": "/",
     "theme_color": "#4ffaff",
     "shortcuts": [],
-    "description": "Find your next job",
+    "description": "My Studyinfo as verifiable credentials",
     "screenshots": [],
-    "categories": ["business", "education"]
+    "categories": ["education"]
 }
