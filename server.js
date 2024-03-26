@@ -752,10 +752,13 @@ app.post('/:name/:id/token', async (req, res) => {
 })
 
 app.post(`/:name/:id/${oid4vcPath}`, async (req, res) => {
+  console.log(req.method, req.url)
+  console.log(req.body)
   const vc = await getVerifiableCredential(id, fmt).catch(e => {
     res.status(404).json(e)
     throw new Error(e)
   })
+  console.log(JSON.stringify(vc, null, 2))
   res.json({"credential": vc})
 })
 
