@@ -496,14 +496,14 @@ app.get(credentialListPath, async (req, res) => {
           const offer = createOffer(rowId, file)
           console.log(JSON.stringify(offer, null, 2))
           console.log(`Expecting request to ${offer.credential_issuer}/.well-known/openid-credential-issuer`)
-          const offerLink = 'openid-credential-offer://?credential_offer=' + encodeURIComponent(JSON.stringify(offer))
-          const offerUri = `${offer.credential_issuer}/credential-offer.json`
+          const offerLink = 'openid-credential-offer://?credential_offer_uri=' + encodeURIComponent(`${offer.credential_issuer}/credential-offer.json`)
+          const alternateOffer = 'openid-credential-offer://?credential_offer=' + encodeURIComponent(JSON.stringify(offer))
           const li = `<li class="${achievement.achievementType}"><a href="${credentialPath}?id=${encodeURIComponent(achievement.id)}">` +
                      `<span class="card"><img src="${svgPath}?id=${encodeURIComponent(achievement.id)}" alt="${achievement.name}" /></span></a>` +
                      `<span class="download"><span lang="fi">Lataa</span> <span lang="en">Download</span> <span lang="sv">Ladda ned</span>: ` +
                      `<a download="${file}.svg" href="${svgPath}?id=${encodeURIComponent(achievement.id)}">SVG</a> ` +
                      `<a download="${file}.json" href="${credentialPath}?id=${encodeURIComponent(achievement.id)}">JSON</a> ` +
-                     `<a class="oid4vci" href="${offerUri}" data-offeruri="${offerLink}"><span lang="fi">lompakkoon</span> <span lang="en">to wallet</span> <span lang="sv">till plånboken</span></a>` +
+                     `<a class="oid4vci" href="${offerLink}" data-offer="${alternateOffer}"><span lang="fi">lompakkoon</span> <span lang="en">to wallet</span> <span lang="sv">till plånboken</span></a>` +
                      `</span></li>`
           resolve(li)
         })
