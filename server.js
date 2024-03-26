@@ -270,9 +270,9 @@ const app = express()
 app.set('trust proxy', 1)
 app.use(cors())
 app.use(express.urlencoded({ extended: true }))
-app.get('/favicon.png', (req, res) => {
-  console.log(req.method, req.url)
-  res.sendFile(new URL('./favicon.png', import.meta.url).pathname)
+app.get(/^\/(.*)\.(png|ico|html|json)/, (req, res) => {
+  console.log(req.method, req.url, req.params[0])
+  res.sendFile(new URL(`./${req.params[0]}.${req.params[1]}`, import.meta.url).pathname)
 })
 
 app.get('/', async (req, res) => {
