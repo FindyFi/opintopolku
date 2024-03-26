@@ -270,7 +270,7 @@ const app = express()
 app.set('trust proxy', 1)
 app.use(cors())
 app.use(express.urlencoded({ extended: true }))
-app.get(/^\/(.*)\.(png|ico|html|json)/, (req, res) => {
+app.get(/^\/(.*)\.(png|ico|html)/, (req, res) => {
   console.log(req.method, req.url, req.params[0])
   res.sendFile(new URL(`./${req.params[0]}.${req.params[1]}`, import.meta.url).pathname)
 })
@@ -278,6 +278,11 @@ app.get(/^\/(.*)\.(png|ico|html|json)/, (req, res) => {
 app.get('/', async (req, res) => {
   console.log(req.method, req.url)
   res.sendFile(new URL('./index.html', import.meta.url).pathname)
+})
+
+app.get('/manifest.json', async (req, res) => {
+  console.log(req.method, req.url)
+  res.sendFile(new URL('./manifest.json', import.meta.url).pathname)
 })
 
 const didDocPath = path.length == 0 ? '/.well-known/did.json' : `${path}/did.json`
