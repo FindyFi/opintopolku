@@ -715,8 +715,8 @@ app.post('/token', async (req, res) => {
     "token_type": "bearer",
     "expires_in": 86400,
   }
-  if (req.body.pre-authorized_code) {
-    const id = req.body.pre-authorized_code
+  const id = req.body['pre-authorized_code']
+  if (id) {
     json.authorization_details = [
       {
         "type": "openid_credential",
@@ -736,8 +736,8 @@ app.post('/:name/:id/token', async (req, res) => {
     "token_type": "bearer",
     "expires_in": 86400,
   }
-  if (req.body.pre-authorized_code) {
-    const id = req.body.pre-authorized_code
+  const id = req.body['pre-authorized_code']
+  if (id) {
     json.authorization_details = [
       {
         "type": "openid_credential",
