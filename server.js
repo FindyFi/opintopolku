@@ -725,6 +725,7 @@ app.post('/token', async (req, res) => {
       }
     ]
   }
+  console.log(JSON.stringify(json, null, 2))
   res.setHeader('Cache-Control', 'no-store').json(json)
 })
 
@@ -746,6 +747,7 @@ app.post('/:name/:id/token', async (req, res) => {
       }
     ]
   }
+  console.log(JSON.stringify(json, null, 2))
   res.setHeader('Cache-Control', 'no-store').json(json)
 })
 
