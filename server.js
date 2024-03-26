@@ -466,12 +466,12 @@ app.get(credentialListPath, async (req, res) => {
         },
         "issuer": issuer,
         "issuanceDate": issuanceDate,
-        "credentialSchema": [
-          {
-            "id": "https://purl.imsglobal.org/spec/ob/v3p0/schema/json/ob_v3p0_achievementcredential_schema.json",
-            "type": "1EdTechJsonSchemaValidator2019"
-          }
-        ]
+        // "credentialSchema": [
+        //   {
+        //     "id": "https://purl.imsglobal.org/spec/ob/v3p0/schema/json/ob_v3p0_achievementcredential_schema.json",
+        //     "type": "1EdTechJsonSchemaValidator2019"
+        //   }
+        // ]
       }
       if (person.etunimet && person.sukunimi) {
         const hash = createHash('sha256')
