@@ -503,7 +503,7 @@ app.get(credentialListPath, async (req, res) => {
                      `<span class="download"><span lang="fi">Lataa</span> <span lang="en">Download</span> <span lang="sv">Ladda ned</span>: ` +
                      `<a download="${file}.svg" href="${svgPath}?id=${encodeURIComponent(achievement.id)}">SVG</a> ` +
                      `<a download="${file}.json" href="${credentialPath}?id=${encodeURIComponent(achievement.id)}">JSON</a> ` +
-                     `<a class="oid4vci" href="${offerLink}" data-offeruri="${offerUri}"><span lang="fi">lompakkoon</span> <span lang="en">to wallet</span> <span lang="sv">till plånboken</span></a>` +
+                     `<a class="oid4vci" href="${offerUri}" data-offeruri="${offerLink}"><span lang="fi">lompakkoon</span> <span lang="en">to wallet</span> <span lang="sv">till plånboken</span></a>` +
                      `</span></li>`
           resolve(li)
         })
