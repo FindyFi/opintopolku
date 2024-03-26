@@ -247,7 +247,7 @@
         "https://www.w3.org/2018/credentials/v1",
         "https://www.w3.org/2018/credentials/examples/v1"
       ],
-      "type": "VerifiablePresentation",
+      "type": ["VerifiablePresentation"],
       verifiableCredential: [],
     }
     setTitle()
@@ -283,6 +283,7 @@
      }
      const oidOffers = c.querySelectorAll('.oid4vci')
      for (const offer of oidOffers) {
+      let qr
       const offerDiv = document.createElement('div')
       offerDiv.className = 'oid4vciOffer hidden empty'
       offer.parentNode.parentNode.appendChild(offerDiv)
@@ -290,7 +291,7 @@
        // e.preventDefault()
        if (offerDiv.classList.contains('empty')) {
         console.log(`Creating QR code for ${offer.href}`)
-        new QRCode(offerDiv, offer.href)
+        qr = new QRCode(offerDiv, {colorDark: "#0d0342", text: offer.href})
         offerDiv.classList.remove('empty')
        }
        offerDiv.classList.toggle('hidden')
@@ -301,7 +302,8 @@
        offer.dataset.offer = currentHref
        offerDiv.innerHTML = ''
        console.log(`Creating QR code for ${offer.href}`)
-       new QRCode(offerDiv, offer.href)
+       qr.clear()
+       qr.makeCode(offer.href)
       }
      }
      const credentialType = 'VerifiablePresentation'
