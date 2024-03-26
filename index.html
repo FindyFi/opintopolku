@@ -297,8 +297,8 @@
       }
       offerDiv.onclick = function(e) {
        const currentHref = offer.href
-       offer.href = offer.dataset.offeruri
-       offer.dataset.offeruri = currentHref
+       offer.href = offer.dataset.offer
+       offer.dataset.offer = currentHref
        offerDiv.innerHTML = ''
        console.log(`Creating QR code for ${offer.href}`)
        new QRCode(offerDiv, offer.href)
