@@ -728,6 +728,27 @@ app.post('/token', async (req, res) => {
   res.setHeader('Cache-Control', 'no-store').json(json)
 })
 
+app.post('/:name/:id/token', async (req, res) => {
+  console.log(req.method, req.url)
+  console.log(req.body)
+  const json = {
+    "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6Ikp..sHQ",
+    "token_type": "bearer",
+    "expires_in": 86400,
+  }
+  if (req.body.pre-authorized_code) {
+    const id = req.body.pre-authorized_code
+    json.authorization_details = [
+      {
+        "type": "openid_credential",
+        "credential_configuration_id": credentialType,
+        "credential_identifiers": [ id ]
+      }
+    ]
+  }
+  res.setHeader('Cache-Control', 'no-store').json(json)
+})
+
 app.post(`/:name/:id/${oid4vcPath}`, async (req, res) => {
   const vc = await getVerifiableCredential(id, fmt).catch(e => {
     res.status(404).json(e)
