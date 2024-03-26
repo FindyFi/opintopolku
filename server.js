@@ -433,10 +433,10 @@ app.get(credentialListPath, async (req, res) => {
       }
       if (a.koulutusmoduuli?.tunniste?.koodiarvo) {
         achievement.id = [
-            achievement.creator.id,
-            a.koulutusmoduuli.tunniste.koodiarvo,
-            subject,
-            issuanceDate
+          achievement.creator.id,
+          a.koulutusmoduuli.tunniste.koodiarvo,
+          subject,
+          issuanceDate
         ].join('/')
       }
       issuanceDate = new Date(issuanceDate).toISOString()
@@ -458,7 +458,7 @@ app.get(credentialListPath, async (req, res) => {
         ],
         "id": achievement.id,
         "type": ["VerifiableCredential", credentialType],
-        "name": achievement.name,
+        // "name": achievement.name,
         "credentialSubject": {
           "id": achievement.id,
           "type": "AchievementSubject",
