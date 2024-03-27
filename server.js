@@ -270,6 +270,11 @@ const app = express()
 app.set('trust proxy', 1)
 app.use(cors())
 app.use(express.urlencoded({ extended: true }))
+app.use((req, res, next) => {
+  console.log(req.method, req.url, req.params)
+  next();
+})
+
 app.get(/^\/(.*)\.(png|ico|html)/, (req, res) => {
   console.log(req.method, req.url, req.params[0])
   res.sendFile(new URL(`./${req.params[0]}.${req.params[1]}`, import.meta.url).pathname)
