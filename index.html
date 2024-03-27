@@ -302,8 +302,9 @@
        offer.dataset.offer = currentHref
        offerDiv.innerHTML = ''
        console.log(`Creating QR code for ${offer.href}`)
-       qr.clear()
-       qr.makeCode(offer.href)
+       // qr.clear()
+       // qr.makeCode(offer.href)
+       qr = new QRCode(offerDiv, {colorDark: "#0d0342", text: offer.href})
       }
      }
      const credentialType = 'VerifiablePresentation'
