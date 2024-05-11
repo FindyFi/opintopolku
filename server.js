@@ -186,12 +186,12 @@ async function getDidDocument(req, res) {
         break
       case 'Ed25519VerificationKey2020':
         contexts.add('https://w3id.org/security/suites/ed25519-2020/v1')
-        didDoc.verificationMethod.at(-1).publicKeyMultibase = bytesToMultibase(hexToBytes(key.publicKeyHex), 'Ed25519')
+        didDoc.verificationMethod.at(-1).publicKeyMultibase = bytesToMultibase(hexToBytes(key.publicKeyHex), 'base58btc', 'ed25519-pub')
         delete(didDoc.verificationMethod.at(-1).publicKeyHex)
         break
       case 'X25519KeyAgreementKey2020':
         contexts.add('https://w3id.org/security/suites/x25519-2020/v1')
-        didDoc.verificationMethod.at(-1).publicKeyMultibase = bytesToMultibase(hexToBytes(key.publicKeyHex), 'X25519')
+        didDoc.verificationMethod.at(-1).publicKeyMultibase = bytesToMultibase(hexToBytes(key.publicKeyHex), 'base58btc', 'X25519-pub')
         delete(didDoc.verificationMethod.at(-1).publicKeyHex)
         break
       case 'EcdsaSecp256r1VerificationKey2019':
@@ -285,7 +285,7 @@ app.get('/', async (req, res) => {
   res.sendFile(new URL('./index.html', import.meta.url).pathname)
 })
 
-app.get('/manifest.json', async (req, res) => {
+app.get(/\/manifest.*/, async (req, res) => {
   console.log(req.method, req.url)
   res.sendFile(new URL('./manifest.json', import.meta.url).pathname)
 })
