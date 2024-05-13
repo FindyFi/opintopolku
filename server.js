@@ -285,8 +285,12 @@ app.get('/', async (req, res) => {
   res.sendFile(new URL('./index.html', import.meta.url).pathname)
 })
 
-app.get(/\/manifest.*/, async (req, res) => {
+app.get(/\/manifest(.*)/, async (req, res) => {
   console.log(req.method, req.url)
+  const ext = req.params[0]
+  if (ext == 'webmanifest') {
+    res.setHeader('Content-Type', 'application/manifest+json')
+  }
   res.sendFile(new URL('./manifest.json', import.meta.url).pathname)
 })
 
