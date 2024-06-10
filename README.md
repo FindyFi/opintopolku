@@ -8,7 +8,7 @@ Tutustu demoon osoitteessa [opintopolku.findy.fi](https://opintopolku.findy.fi/)
 ```sh
 git clone https://github.com/FindyFi/opintopolku.git
 cd opintopolku
-npm i @veramo/cli -g
+sudo NODE_OPTIONS=--max-old-space-size=3072 npm i @veramo/cli -g
 veramo config create
 HOST='opintopolku.findy.fi'
 PORT=4343
