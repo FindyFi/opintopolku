@@ -11,13 +11,13 @@ import { Resolver } from 'did-resolver'
 import { getResolver as webDidResolver } from 'web-did-resolver'
 import { WebDIDProvider } from '@veramo/did-provider-web'
 import { CredentialPlugin } from '@veramo/credential-w3c'
-import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2020, VeramoEcdsaSecp256k1RecoverySignature2020 } from '@veramo/credential-ld'
+import { CredentialProviderJWT } from '@veramo/credential-jwt'
 import { bytesToBase58, bytesToMultibase, hexToBytes } from '@veramo/utils'
 import express from 'express'
 import cors from 'cors'
 import sqlite3 from 'sqlite3'
 import * as yaml from 'js-yaml'
-import openBadgeContext from './context-3.0.3.json' assert { type: 'json' }
+import openBadgeContext from './context-3.0.3.json' with { type: 'json' }
 
 const CREDENTIALS_DB_FILE = 'credentials.db'
 
@@ -105,13 +105,9 @@ const agent = createAgent({
         ...webDidResolver(),
       }),
     }),
-    new CredentialPlugin(),
-    new CredentialIssuerLD({
-      contextMaps: [LdDefaultContexts, badgeContexts],
-      suites: [
-        new VeramoEd25519Signature2020(),
-      ]
-    })
+    new CredentialPlugin([
+      new CredentialProviderJWT()
+    ]),
   ]
 })
 
@@ -535,8 +531,8 @@ app.get(credentialListPath, async (req, res) => {
 
 app.get(credentialPath, async (req, res) => {
   console.log(req.method, req.url)
-  const fmt = 'lds'
-  if (req.query.format == 'jwt') {
+  const fmt = 'jwt'
+  if (req.query.format == 'lds') {
     const fmt = req.query.format
   }
   const vc = await getVerifiableCredential(req.query.id, fmt).catch(e => {
@@ -548,7 +544,7 @@ app.get(credentialPath, async (req, res) => {
 
 app.get(svgPath, async (req, res) => {
   console.log(req.method, req.url)
-  const vc = await getVerifiableCredential(req.query.id, 'lds').catch(e => {
+  const vc = await getVerifiableCredential(req.query.id, 'jwt').catch(e => {
     res.status(404).json(e)
   })
   if (!vc) return false
