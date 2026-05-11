@@ -1,14 +1,16 @@
 # Opintopolku-todisteet
+
 Vahvistettavia todisteita oman opintopolun tiedoista.
 
 Tutustu demoon osoitteessa [opintopolku.findy.fi](https://opintopolku.findy.fi/).
 
-# Käyttöönotto
+## Käyttöönotto
 
 ```sh
+cd ~/github
 git clone https://github.com/FindyFi/opintopolku.git
 cd opintopolku
-npm i @veramo/cli -g
+sudo npm i @veramo/cli -g
 veramo config create
 HOST='opintopolku.findy.fi'
 PORT=4343
