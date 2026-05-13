@@ -271,6 +271,10 @@ app.use((req, res, next) => {
   next();
 })
 
+app.get('/healthz', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 app.get(/^\/(.*)\.(png|ico|html)/, (req, res) => {
   console.log(req.method, req.url, req.params[0])
   res.sendFile(new URL(`./${req.params[0]}.${req.params[1]}`, import.meta.url).pathname)
