@@ -10,12 +10,13 @@ Tutustu demoon osoitteessa [opintopolku.findy.fi](https://opintopolku.findy.fi/)
 cd ~/github
 git clone https://github.com/FindyFi/opintopolku.git
 cd opintopolku
+mkdir db
 sudo NODE_OPTIONS=--max-old-space-size=3072 sudo npm i @veramo/cli -g
 veramo config create
 export CREDENTIALS_DB_FILE="./db/credentials.db"
 HOST='opintopolku.findy.fi'
 PORT=4343
-DBFILE='veramo.db'
+DBFILE='.db/veramo.db'
 KEY=`veramo config gen-key -q`
 sed -i'.default' \                                                                                                                                                                                                                                                                                                                                       [17:03:57]
  -e "s/\(baseUrl: \).*/\1'https:\/\/$HOST'/" \
