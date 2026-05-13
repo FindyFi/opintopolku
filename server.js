@@ -19,7 +19,7 @@ import sqlite3 from 'sqlite3'
 import * as yaml from 'js-yaml'
 import openBadgeContext from './context-3.0.3.json' with { type: 'json' }
 
-const CREDENTIALS_DB_FILE = 'credentials.db'
+const CREDENTIALS_DB_FILE = process.env.CREDENTIALS_DB_FILE || 'credentials.db'
 
 const credentialListPath = '/credentials'
 const credentialPath = '/credential'
